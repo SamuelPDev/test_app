@@ -16,12 +16,14 @@
   let isInstalled = window.localStorage.getItem("installed");
   let inputFile = null;
   let pedidos = [];
-  let custom = null;
+  let customCarnes = null;
+  let customEnsaladas = null;
+  let customArroz = null;
   let install;
 
   const currentDate = getDate().toFirebase();
   const UUID = localStorage.getItem("USER_UID");
-  let menu = { ensalada: [] };
+  let menu = { ensalada: [], carnes: [], arroces: [] };
 
   $: name = $userInfo?.name ?? "Loading...";
   $: precio = $state?.price ?? 140;
@@ -45,6 +47,7 @@
   let facturacion = "intellisys";
   let ubicacion = "intellisys";
   let guarnicion = "";
+  let acompañamiento = "";
   let ensalada = "";
   let segundo = "";
 
@@ -198,7 +201,7 @@
 
   async function send() {
     if ($state.activa) {
-      if (!ensalada || !guarnicion || !ensalada) {
+      if (!ensalada || !guarnicion || !segundo) {
         return toast.push("Debes agregar todos los campos", {
           theme: {
             "--toastBackground": "#F56565",
@@ -239,7 +242,6 @@
         ensalada = "";
         segundo = "";
         guarnicion = "";
-        custom = null;
 
         toast.push("tu pedido fue enviado", {
           theme: {
@@ -268,6 +270,9 @@
     onValue(menuRef, (snapshot) => {
       const data = snapshot.val() ?? {};
       menu.ensalada = data.ensalada.sort((a, b) => a.localeCompare(b)) ?? [];
+      menu.carnes = data.guarnicion.sort((a, b) => a.localeCompare(b)) ?? [];
+      menu.arroces =
+        data.acompanamiento.sort((a, b) => a.localeCompare(b)) ?? [];
     });
   });
 </script>
@@ -502,7 +507,6 @@
       {/if}
     </div>
   </div>
-
   <div
     class={`mr-6 ${
       isAdmin ? "lg:w-1/2" : "lg:w-1/3"
@@ -559,13 +563,13 @@
 
   {#if !isAdmin}
     <div
-      class="mr-6 lg:w-1/3 w-full mt-6 flex-shrink-0 flex flex-col rounded-lg mr-72"
+      class="lg:w-1/3 w-full mt-6 flex-shrink-0 flex flex-col rounded-lg mr-72"
     >
-      <div class="container mx-auto w-min">
+      <div class="container mx-auto min-w-min">
         <div
           class="py-6 p-10 {$darkMode
             ? 'bg-gray-900'
-            : 'bg-white'} rounded-xl mt-2"
+            : 'bg-white'} rounded-xl mt-2 flex flex-col items-center"
         >
           <div class="mb-4 flex flex-col">
             <span
@@ -631,27 +635,94 @@
               <option value="separado">Separado</option>
             </select>
           </div>
+          <div class="mb-4 flex flex-col">
+            <span
+              class="mr-4 {$darkMode
+                ? 'text-gray-300'
+                : 'text-gray-700'} font-bold inline-block mb-2"
+            >
+              <span> Guarnicion: </span>
+            </span>
 
-          <div class="mb-4">
-            <input
-              class="border {$darkMode
-                ? 'bg-gray-800 text-gray-400'
-                : 'bg-gray-100'} py-2 px-4 w-64 outline-none focus:ring-2 focus:ring-indigo-400 rounded"
-              placeholder="Guarnicion"
-              type="text"
-              bind:value={guarnicion}
-            />
+            {#if !customArroz}
+              <!-- svelte-ignore a11y-no-onchange -->
+              <select
+                class="border {$darkMode
+                  ? 'bg-gray-800 text-gray-400'
+                  : 'bg-gray-100'} py-2 px-4 w-64 outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+                bind:value={guarnicion}
+                on:change={() => {
+                  if (guarnicion === "Otra") {
+                    toast.push("Escribe la guarnicion", {
+                      theme: {
+                        "--toastBackground": "#6ee7b7",
+                        "--toastProgressBackground": "#58bf96",
+                      },
+                    });
+                    customArroz = true;
+                    guarnicion = "";
+                  }
+                }}
+              >
+                {#each menu?.arroces as item}
+                  <option value={item}>{item}</option>
+                {/each}
+              </select>
+            {:else}
+              <input
+                class="border {$darkMode
+                  ? 'bg-gray-800 text-gray-400'
+                  : 'bg-gray-100'} py-2 px-4 w-64 outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+                placeholder="Escribe la guarnicion"
+                type="text"
+                bind:value={guarnicion}
+              />
+            {/if}
           </div>
 
-          <div class="mb-4">
-            <input
-              class="border {$darkMode
-                ? 'bg-gray-800 text-gray-400'
-                : 'bg-gray-100'} py-2 px-4 w-64 outline-none focus:ring-2 focus:ring-indigo-400 rounded"
-              placeholder="Acompañamiento"
-              type="text"
-              bind:value={segundo}
-            />
+          <div class="mb-4 flex flex-col">
+            <span
+              class="mr-4 {$darkMode
+                ? 'text-gray-300'
+                : 'text-gray-700'} font-bold inline-block mb-2"
+            >
+              <span> Acompañamiento: </span>
+            </span>
+
+            {#if !customCarnes}
+              <!-- svelte-ignore a11y-no-onchange -->
+              <select
+                class="border {$darkMode
+                  ? 'bg-gray-800 text-gray-400'
+                  : 'bg-gray-100'} py-2 px-4 w-64 outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+                bind:value={segundo}
+                on:change={() => {
+                  if (segundo === "Otra") {
+                    toast.push("Escribe el acompañamiento", {
+                      theme: {
+                        "--toastBackground": "#6ee7b7",
+                        "--toastProgressBackground": "#58bf96",
+                      },
+                    });
+                    customCarnes = true;
+                    segundo = "";
+                  }
+                }}
+              >
+                {#each menu?.carnes as item}
+                  <option value={item}>{item}</option>
+                {/each}
+              </select>
+            {:else}
+              <input
+                class="border {$darkMode
+                  ? 'bg-gray-800 text-gray-400'
+                  : 'bg-gray-100'} py-2 px-4 w-64 outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+                placeholder="Escribe el acompañamiento"
+                type="text"
+                bind:value={segundo}
+              />
+            {/if}
           </div>
 
           <div class="mb-4 flex flex-col">
@@ -663,7 +734,7 @@
               <span> Ensalada: </span>
             </span>
 
-            {#if !custom}
+            {#if !customEnsaladas}
               <!-- svelte-ignore a11y-no-onchange -->
               <select
                 class="border {$darkMode
@@ -672,13 +743,13 @@
                 bind:value={ensalada}
                 on:change={() => {
                   if (ensalada === "Otra") {
-                    toast.push("Escribe el nombre de la ensalada", {
+                    toast.push("Escribe la ensalada", {
                       theme: {
                         "--toastBackground": "#6ee7b7",
                         "--toastProgressBackground": "#58bf96",
                       },
                     });
-                    custom = true;
+                    customEnsaladas = true;
                     ensalada = "";
                   }
                 }}
@@ -697,44 +768,46 @@
                 bind:value={ensalada}
               />
             {/if}
-          </div>
 
-          <button
-            class={`w-full mt-6 text-white font-bold ${
-              $state?.activa ? "bg-green-400" : "bg-gray-400 cursor-not-allowed"
-            } py-3 rounded-md`}
-            on:click={send}
-          >
-            <span class="mx-auto">
-              {#if $state?.activa}
-                {#if miPedido?.length}
-                  Actualizar pedido
-                {:else}
-                  Enviar
-                {/if}
-              {:else}
-                No puedes realizar pedidos
-              {/if}
-            </span>
-          </button>
-          {#if install && isInstalled === null}
             <button
-              class=" text-white font-bold bg-green-400 py-3 rounded-full px-4 fixed right-5 bottom-5"
-              on:click={async () => {
-                await Swal.fire("Instalar app");
-
-                install.prompt();
-
-                const choise = await install.userChoice;
-
-                if (choise.outcome === "accepted") {
-                  window.localStorage.setItem("installed", "ok");
-                }
-              }}
+              class={`w-full mt-6 text-white font-bold ${
+                $state?.activa
+                  ? "bg-green-400"
+                  : "bg-gray-400 cursor-not-allowed"
+              } py-3 rounded-md`}
+              on:click={send}
             >
-              <i class="fas fa-download" />
+              <span class="mx-auto">
+                {#if $state?.activa}
+                  {#if miPedido?.length}
+                    Actualizar pedido
+                  {:else}
+                    Enviar
+                  {/if}
+                {:else}
+                  No puedes realizar pedidos
+                {/if}
+              </span>
             </button>
-          {/if}
+            {#if install && isInstalled === null}
+              <button
+                class=" text-white font-bold bg-green-400 py-3 rounded-full px-4 fixed right-5 bottom-5"
+                on:click={async () => {
+                  await Swal.fire("Instalar app");
+
+                  install.prompt();
+
+                  const choise = await install.userChoice;
+
+                  if (choise.outcome === "accepted") {
+                    window.localStorage.setItem("installed", "ok");
+                  }
+                }}
+              >
+                <i class="fas fa-download" />
+              </button>
+            {/if}
+          </div>
         </div>
       </div>
     </div>
